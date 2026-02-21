@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRINTX — A4 Print Service</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0d0d;--surface:#161616;--surface2:#1e1e1e;--border:#282828;--accent:#e8ff47;--text:#efefef;--muted:#555;--muted2:#3a3a3a;--danger:#ff4d4d;--green:#4dff91;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:14px;line-height:1.6;overflow-x:hidden;}
+::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-track{background:var(--bg);} ::-webkit-scrollbar-thumb{background:var(--border);}
+
+header{position:fixed;top:0;left:0;right:0;z-index:300;display:flex;justify-content:space-between;align-items:center;padding:0 2rem;height:56px;background:rgba(13,13,13,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:.22em;color:var(--text);text-decoration:none;user-select:none;}
+.logo span{color:var(--accent);}
+.header-nav{display:flex;gap:1.5rem;align-items:center;}
+.header-nav a{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--muted);transition:color .18s;}
+.header-nav a:hover{color:var(--text);}
+.header-badge{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(232,255,71,.25);padding:.25rem .65rem;white-space:nowrap;}
+
+.hero{padding:5rem 2rem 3rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;gap:2rem;flex-wrap:wrap;}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,6vw,6rem);line-height:.9;letter-spacing:.03em;}
+.hero h1 span{color:var(--accent);}
+.hero-meta{max-width:300px;}
+.hero-meta p{font-size:.7rem;color:var(--muted);line-height:1.9;margin-bottom:1.3rem;}
+
+.btn{display:inline-block;font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;border:none;padding:.68rem 1.4rem;cursor:pointer;transition:opacity .14s,transform .1s;white-space:nowrap;}
+.btn:active{transform:scale(.97);}
+.btn-accent{background:var(--accent);color:#0d0d0d;font-weight:500;}
+.btn-accent:hover{opacity:.85;}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);}
+.btn-outline:hover{border-color:var(--muted2);}
+.btn-sm{font-size:.58rem;padding:.3rem .7rem;}
+
+.layout{display:grid;grid-template-columns:1fr 340px;align-items:start;}
+.col-left{border-right:1px solid var(--border);padding:2.5rem 2rem;}
+.col-right{padding:2.5rem 1.8rem;position:sticky;top:56px;max-height:calc(100vh - 56px);overflow-y:auto;}
+
+.sec-label{font-size:.57rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-bottom:1.3rem;display:flex;align-items:center;gap:.6rem;}
+.sec-label::before{content:'';display:block;width:16px;height:1px;background:var(--border);flex-shrink:0;}
+
+.upload-zone{border:1px dashed var(--border);padding:2.8rem 1.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--surface);margin-bottom:1.5rem;user-select:none;}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:rgba(232,255,71,.025);}
+.upload-zone.drag-over{border-style:solid;}
+.upload-icon{margin:0 auto 1rem;color:var(--muted);transition:color .2s;}
+.upload-zone:hover .upload-icon,.upload-zone.drag-over .upload-icon{color:var(--accent);}
+.upload-zone h3{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.1em;margin-bottom:.3rem;}
+.upload-zone p{font-size:.66rem;color:var(--muted);margin-bottom:1.2rem;}
+.chips{display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap;margin-top:1rem;}
+.chip{font-size:.55rem;letter-spacing:.1em;padding:.16rem .5rem;border:1px solid var(--border);color:var(--muted);text-transform:uppercase;}
+#file-input{display:none;}
+
+.file-table-wrap{display:none;margin-bottom:2rem;}
+.file-table{width:100%;border-collapse:collapse;}
+.file-table thead tr{border-bottom:1px solid var(--border);}
+.file-table thead th{font-size:.55rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:.4rem .6rem;text-align:left;font-weight:400;}
+.file-table thead th.right{text-align:right;} .file-table thead th.center{text-align:center;}
+.file-table tbody tr{border-bottom:1px solid #1a1a1a;background:var(--surface);transition:background .13s;animation:fadeUp .22s ease;}
+.file-table tbody tr:hover{background:var(--surface2);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.file-table td{padding:.65rem .6rem;font-size:.7rem;vertical-align:middle;}
+.td-num{color:var(--muted);width:30px;text-align:center;font-size:.62rem;}
+.td-name{max-width:180px;} .td-name-inner{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+.td-ext{font-size:.58rem;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;}
+.td-pages{text-align:center;}
+.pages-badge{background:var(--surface2);border:1px solid var(--border);font-size:.6rem;padding:.12rem .45rem;min-width:28px;display:inline-block;text-align:center;}
+.td-copies{width:96px;text-align:center;}
+.copies-ctrl{display:flex;align-items:center;justify-content:center;}
+.copies-ctrl button{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:24px;height:26px;cursor:pointer;font-size:.9rem;line-height:1;transition:background .13s;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.copies-ctrl button:hover{background:var(--muted2);}
+.copies-input{width:34px;background:var(--surface);border:1px solid var(--border);border-left:none;border-right:none;color:var(--text);font-family:'DM Mono',monospace;font-size:.7rem;text-align:center;padding:.12rem 0;height:26px;outline:none;}
+.copies-input::-webkit-outer-spin-button,.copies-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.td-subtotal{text-align:right;font-size:.68rem;color:var(--text);white-space:nowrap;}
+.td-preview{text-align:center;width:60px;}
+.td-action{text-align:center;width:30px;}
+.btn-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;line-height:1;transition:color .14s;padding:.2rem;}
+.btn-rm:hover{color:var(--danger);}
+.btn-preview-sm{background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:.58rem;padding:.18rem .4rem;line-height:1;transition:all .14s;}
+.btn-preview-sm:hover{border-color:var(--accent);color:var(--accent);}
+.table-footer{display:flex;justify-content:space-between;align-items:center;padding:.6rem .6rem;background:var(--surface2);border-top:1px solid var(--border);font-size:.62rem;color:var(--muted);}
+.table-footer strong{color:var(--text);}
+
+.config-block{margin-bottom:2rem;}
+.config-title{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:.1em;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid var(--border);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-bottom:.9rem;}
+.form-group{margin-bottom:.9rem;}
+label{display:block;font-size:.57rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:.38rem;}
+input[type="text"],input[type="email"],input[type="tel"],input[type="number"],select,textarea{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:.74rem;padding:.62rem .8rem;outline:none;transition:border-color .18s;appearance:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--muted2);}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .8rem center;cursor:pointer;}
+textarea{resize:vertical;min-height:78px;}
+.radio-group{display:flex;gap:.35rem;}
+.radio-btn{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:.63rem;letter-spacing:.07em;text-transform:uppercase;padding:.58rem .3rem;cursor:pointer;transition:all .14s;text-align:center;}
+.radio-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(232,255,71,.05);}
+.radio-btn:hover:not(.active){border-color:var(--muted2);color:var(--text);}
+
+.contact-links{display:flex;flex-direction:column;gap:.6rem;margin-top:.8rem;}
+.contact-link{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;background:var(--surface);border:1px solid var(--border);font-size:.7rem;color:var(--muted);text-decoration:none;transition:border-color .15s,color .15s;}
+.contact-link:hover{border-color:var(--muted2);color:var(--text);}
+.cl-label{font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:.1rem;}
+.cl-val{color:var(--text);font-size:.7rem;}
+.contact-link.whatsapp:hover{border-color:#25d366;} .contact-link.whatsapp:hover .cl-val{color:#25d366;}
+.contact-link.gmail:hover{border-color:#ea4335;} .contact-link.gmail:hover .cl-val{color:#ea4335;}
+
+.summary-title{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.12em;margin-bottom:1.2rem;padding-bottom:.65rem;border-bottom:1px solid var(--border);}
+.s-row{display:flex;justify-content:space-between;align-items:baseline;font-size:.65rem;color:var(--muted);padding:.42rem 0;border-bottom:1px solid #181818;}
+.s-row span:last-child{color:var(--text);text-align:right;max-width:55%;word-break:break-word;}
+.s-row.total{border-bottom:none;border-top:1px solid var(--border);margin-top:.5rem;padding-top:.9rem;}
+.s-row.total span:last-child{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent);letter-spacing:.05em;line-height:1;}
+
+.btn-submit{width:100%;margin-top:1.2rem;padding:.9rem;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.2em;background:var(--accent);color:#0d0d0d;border:none;cursor:pointer;transition:opacity .14s,transform .1s;}
+.btn-submit:hover{opacity:.87;} .btn-submit:active{transform:scale(.98);}
+.btn-submit:disabled{opacity:.32;cursor:not-allowed;transform:none;}
+.note{font-size:.57rem;color:var(--muted);text-align:center;margin-top:.8rem;line-height:1.8;}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:400;align-items:center;justify-content:center;padding:1rem;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--surface);border:1px solid var(--border);width:100%;max-width:780px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem;border-bottom:1px solid var(--border);flex-shrink:0;}
+.modal-header h4{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;}
+.modal-header span{font-size:.62rem;color:var(--muted);margin-left:.8rem;}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1;transition:color .14s;}
+.modal-close:hover{color:var(--text);}
+.modal-body{flex:1;overflow-y:auto;padding:1.2rem;display:flex;justify-content:center;align-items:flex-start;min-height:300px;}
+.modal-body img{max-width:100%;max-height:60vh;object-fit:contain;border:1px solid var(--border);}
+.modal-body canvas{max-width:100%;border:1px solid var(--border);}
+.modal-placeholder{text-align:center;margin:auto;padding:2rem;}
+.modal-placeholder svg{color:var(--muted);margin-bottom:1rem;}
+.modal-placeholder h5{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.08em;margin-bottom:.4rem;}
+.modal-placeholder p{font-size:.68rem;color:var(--muted);line-height:1.7;}
+.pdf-pages{display:flex;gap:.5rem;align-items:center;justify-content:center;padding:.8rem 1.2rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--muted);flex-shrink:0;}
+.pdf-pages button{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.25rem .6rem;cursor:pointer;font-size:.65rem;font-family:'DM Mono',monospace;}
+.pdf-pages button:disabled{opacity:.35;cursor:not-allowed;}
+
+/* Submitting overlay */
+.submitting-overlay{display:none;position:fixed;inset:0;background:rgba(13,13,13,.92);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:1rem;text-align:center;}
+.submitting-overlay.show{display:flex;}
+.spinner{width:36px;height:36px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.submitting-overlay p{font-size:.75rem;color:var(--muted);}
+
+.success-overlay{display:none;position:fixed;inset:0;background:rgba(13,13,13,.95);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:1rem;text-align:center;padding:2rem;}
+.success-overlay.show{display:flex;}
+.success-overlay h2{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.1em;color:var(--accent);}
+.success-overlay p{font-size:.72rem;color:var(--muted);}
+.order-id-box{background:var(--surface);border:1px solid var(--border);padding:.8rem 1.5rem;font-size:.8rem;letter-spacing:.1em;color:var(--accent);margin-top:.5rem;}
+
+.toast{position:fixed;bottom:1.2rem;right:1.2rem;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:.8rem 1.1rem;font-size:.68rem;z-index:9999;transform:translateY(80px);opacity:0;transition:all .26s ease;max-width:260px;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.error{border-left-color:var(--danger);}
+.toast strong{display:block;margin-bottom:.12rem;font-weight:500;}
+.toast span{color:var(--muted);}
+
+footer{border-top:1px solid var(--border);padding:1.2rem 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem;}
+footer p{font-size:.58rem;color:var(--muted);letter-spacing:.08em;}
+.footer-links{display:flex;gap:1.2rem;}
+.footer-links a{font-size:.58rem;color:var(--muted);text-decoration:none;transition:color .16s;}
+.footer-links a:hover{color:var(--text);}
+
+@media(max-width:768px){
+  .header-nav{display:none;}
+  .hero{padding:4rem 1.2rem 2.5rem;}
+  .layout{grid-template-columns:1fr;}
+  .col-left{border-right:none;border-bottom:1px solid var(--border);padding:1.8rem 1.2rem;}
+  .col-right{position:static;max-height:none;padding:1.8rem 1.2rem;}
+  .form-row{grid-template-columns:1fr;}
+  .hero-meta{max-width:100%;}
+  .file-table thead{display:none;}
+  .file-table,.file-table tbody,.file-table tr,.file-table td{display:block;width:100%;}
+  .file-table tbody tr{padding:.8rem;margin-bottom:.4rem;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto auto;gap:.3rem .5rem;}
+  .td-num{display:none;}
+  .td-name{grid-column:1;grid-row:1;padding:0;}
+  .td-ext{grid-column:2;grid-row:1;text-align:right;padding:0;}
+  .td-pages{grid-column:1;grid-row:2;text-align:left;padding:0;font-size:.62rem;color:var(--muted);}
+  .td-copies{grid-column:1;grid-row:3;text-align:left;width:auto;padding:0;}
+  .copies-ctrl{justify-content:flex-start;}
+  .td-subtotal{grid-column:2;grid-row:2/4;text-align:right;padding:0;align-self:center;}
+  .td-preview{display:none;}
+  .td-action{position:absolute;}
+  .file-table td{padding:0;}
+  footer{padding:1rem 1.2rem;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">PRINT<span>X</span></a>
+  <div class="header-nav">
+    <a href="#upload">Upload</a>
+    <a href="#configure">Options</a>
+    <a href="#contact-section">Contact</a>
+    <a href="/admin" style="color:var(--accent)">Admin ↗</a>
+  </div>
+  <div class="header-badge">A4 Only</div>
+</header>
+
+<main>
+  <section class="hero">
+    <div><h1>A4 <span>PRINT</span><br>MADE SIMPLE.</h1></div>
+    <div class="hero-meta">
+      <p>Upload your documents, set your options per file, and place your order. Fast turnaround, clean results.</p>
+      <button class="btn btn-accent" onclick="document.getElementById('upload').scrollIntoView({behavior:'smooth'})">Upload Files →</button>
+    </div>
+  </section>
+
+  <div class="layout">
+    <div class="col-left">
+
+      <!-- Upload -->
+      <section id="upload" style="margin-bottom:2.5rem">
+        <div class="sec-label">Step 01 — Upload Files</div>
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+              <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+            </svg>
+          </div>
+          <h3>Drag &amp; Drop Files Here</h3>
+          <p>or click to browse · A4 documents only</p>
+          <button class="btn btn-outline" onclick="inp.click();event.stopPropagation()">Browse Files</button>
+          <input type="file" id="file-input" multiple accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.tiff">
+          <div class="chips">
+            <span class="chip">PDF</span><span class="chip">DOCX</span><span class="chip">PNG</span><span class="chip">JPEG</span><span class="chip">TIFF</span>
+          </div>
+        </div>
+
+        <div class="file-table-wrap" id="fileTableWrap">
+          <table class="file-table">
+            <thead>
+              <tr>
+                <th class="center">#</th><th>File Name</th><th>Type</th>
+                <th class="center">Pages</th><th class="center">Copies</th>
+                <th class="right">Subtotal</th><th class="center">Preview</th><th>✕</th>
+              </tr>
+            </thead>
+            <tbody id="fileList"></tbody>
+          </table>
+          <div class="table-footer">
+            <span><strong id="totalFiles">0</strong> files &nbsp;·&nbsp; <strong id="totalPrintPages">0</strong> total print pages</span>
+            <button class="btn btn-outline btn-sm" onclick="clearAll()">Clear All</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Configure -->
+      <section id="configure" style="margin-bottom:2.5rem">
+        <div class="sec-label">Step 02 — Print Options</div>
+        <div class="config-block">
+          <div class="config-title">Paper &amp; Colour</div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label>Paper Type</label>
+              <select id="paper" onchange="updateSummary()">
+                <option value="0">Plain 75gsm</option>
+                <option value="1">Matte 90gsm (+₹1/pg)</option>
+                <option value="2">Glossy 120gsm (+₹2/pg)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Colour</label>
+              <div class="radio-group">
+                <button class="radio-btn active" onclick="pick('colour',this,'bw');updateSummary()">B&amp;W</button>
+                <button class="radio-btn" onclick="pick('colour',this,'colour');updateSummary()">Colour</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label>Sides</label>
+              <div class="radio-group">
+                <button class="radio-btn active" onclick="pick('sides',this,'single');updateSummary()">Single</button>
+                <button class="radio-btn" onclick="pick('sides',this,'double');updateSummary()">Double</button>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Binding (per order)</label>
+              <div class="radio-group">
+                <button class="radio-btn active" onclick="pick('binding',this,'none');updateSummary()">None</button>
+                <button class="radio-btn" onclick="pick('binding',this,'staple');updateSummary()">Staple</button>
+                <button class="radio-btn" onclick="pick('binding',this,'spiral');updateSummary()">Spiral</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-block" id="contact-section">
+          <div class="config-title">Your Details</div>
+          <div class="form-row">
+            <div class="form-group"><label>Name</label><input type="text" id="cname" placeholder="Your name"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="cemail" placeholder="you@email.com"></div>
+          </div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="cphone" placeholder="+91 XXXXX XXXXX"></div>
+          <div class="form-group"><label>Notes (optional)</label><textarea id="cnotes" placeholder="Any special instructions..."></textarea></div>
+        </div>
+
+        <div class="config-block">
+          <div class="config-title">Shop Contact</div>
+          <div class="contact-links" id="shopContacts">
+            <a class="contact-link" id="cl-phone" href="#"><span class="cl-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.72 12 19.79 19.79 0 0 1 1.65 3.38 2 2 0 0 1 3.64 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.97-.97a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/></svg></span><span><span class="cl-label">Phone</span><span class="cl-val" id="shop-phone">Loading…</span></span></a>
+            <a class="contact-link whatsapp" id="cl-wapp" href="#" target="_blank"><span class="cl-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span><span><span class="cl-label">WhatsApp</span><span class="cl-val" id="shop-wapp">Loading…</span></span></a>
+            <a class="contact-link gmail" id="cl-email" href="#"><span class="cl-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span><span class="cl-label">Email</span><span class="cl-val" id="shop-email">Loading…</span></span></a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Summary -->
+    <div class="col-right">
+      <div class="summary-title">Order Summary</div>
+      <div class="s-row"><span>Format</span><span>A4 (210 × 297mm)</span></div>
+      <div class="s-row"><span>Paper</span><span id="s-paper">Plain 75gsm</span></div>
+      <div class="s-row"><span>Colour</span><span id="s-colour">Black &amp; White</span></div>
+      <div class="s-row"><span>Sides</span><span id="s-sides">Single-sided</span></div>
+      <div class="s-row"><span>Binding</span><span id="s-binding">None</span></div>
+      <div class="s-row"><span>Files</span><span id="s-files">—</span></div>
+      <div class="s-row"><span>Total Print Pages</span><span id="s-pages">—</span></div>
+      <div class="s-row"><span>Rate / Page</span><span id="s-rate">₹0.50</span></div>
+      <div class="s-row"><span>Binding Charge</span><span id="s-binding-cost">₹0</span></div>
+      <div class="s-row total"><span>Total</span><span id="s-total">₹0.00</span></div>
+      <button class="btn-submit" id="submitBtn" onclick="submitOrder()" disabled>Place Order →</button>
+      <p class="note">A4 format only · Prices include GST<br>Pickup on confirmation</p>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p id="footer-shop-name">PRINTX — A4 Print Service</p>
+  <div class="footer-links"><a href="/admin">Admin Panel</a><a href="#">Privacy</a></div>
+</footer>
+
+<!-- Preview Modal -->
+<div class="modal-overlay" id="previewModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:.5rem;overflow:hidden;"><h4>Preview</h4><span id="previewFileName" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span></div>
+      <button class="modal-close" onclick="closePreview()">✕</button>
+    </div>
+    <div class="modal-body" id="previewBody"></div>
+    <div class="pdf-pages" id="pdfNav" style="display:none">
+      <button id="prevPage" onclick="changePdfPage(-1)" disabled>← Prev</button>
+      <span id="pdfPageInfo">Page 1 of 1</span>
+      <button id="nextPage" onclick="changePdfPage(1)">Next →</button>
+    </div>
+  </div>
+</div>
+
+<div class="submitting-overlay" id="submittingOverlay">
+  <div class="spinner"></div>
+  <p id="submittingMsg">Uploading files…</p>
+</div>
+
+<div class="success-overlay" id="successOverlay">
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#e8ff47" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <h2>Order Placed!</h2>
+  <p>Your order ID:</p>
+  <div class="order-id-box" id="successOrderId">—</div>
+  <p style="margin-top:.5rem">We'll confirm via WhatsApp or Email shortly.</p>
+  <div style="display:flex;gap:.8rem;margin-top:1rem;flex-wrap:wrap;justify-content:center">
+    <button class="btn btn-outline" onclick="resetAll()">New Order</button>
+    <button class="btn btn-accent" onclick="window.location='/admin'">View in Admin</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><strong id="t-title"></strong><span id="t-msg"></span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+const API = '';  // same origin
+const inp = document.getElementById('file-input');
+
+// Pricing rates (will be updated from server)
+let RATES = { bw:0.5, colour:4.0, plain:0, matte:1, glossy:2, staple:10, spiral:25 };
+
+let files = [];
+let state = { colour:'bw', sides:'single', binding:'none' };
+
+// Load settings from server
+async function loadSettings() {
+  try {
+    const s = await fetch(API+'/api/settings').then(r=>r.json());
+    RATES.bw     = parseFloat(s.rate_bw)     || 0.5;
+    RATES.colour = parseFloat(s.rate_colour) || 4.0;
+    RATES.matte  = parseFloat(s.rate_matte)  || 1;
+    RATES.glossy = parseFloat(s.rate_glossy) || 2;
+    RATES.staple = parseFloat(s.rate_staple) || 10;
+    RATES.spiral = parseFloat(s.rate_spiral) || 25;
+
+    document.getElementById('shop-phone').textContent = s.shop_phone || '—';
+    document.getElementById('shop-wapp').textContent  = s.shop_wapp  || '—';
+    document.getElementById('shop-email').textContent = s.shop_email || '—';
+    document.getElementById('cl-phone').href = 'tel:' + (s.shop_phone||'').replace(/\s/g,'');
+    const wn = (s.shop_wapp||'').replace(/[\s+\-()]/g,'');
+    document.getElementById('cl-wapp').href  = 'https://wa.me/' + wn;
+    document.getElementById('cl-email').href = 'mailto:' + (s.shop_email||'');
+    if (s.shop_name) document.getElementById('footer-shop-name').textContent = s.shop_name + ' — A4 Print Service';
+  } catch(e) {
+    // server not running, use defaults
+    document.getElementById('shop-phone').textContent = '+91 98765 43210';
+    document.getElementById('shop-wapp').textContent  = '+91 98765 43210';
+    document.getElementById('shop-email').textContent = 'printx.shop@gmail.com';
+  }
+  updateSummary();
+}
+
+// Upload zone
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('click', () => inp.click());
+zone.addEventListener('dragover', e=>{e.preventDefault();zone.classList.add('drag-over');});
+zone.addEventListener('dragleave', e=>{if(!zone.contains(e.relatedTarget))zone.classList.remove('drag-over');});
+zone.addEventListener('drop', e=>{e.preventDefault();zone.classList.remove('drag-over');handleFiles(e.dataTransfer.files);});
+inp.addEventListener('change', e=>{handleFiles(e.target.files);inp.value='';});
+
+function handleFiles(list) {
+  const ok=['.pdf','.docx','.doc','.png','.jpg','.jpeg','.tiff','.tif'];
+  let n=0;
+  [...list].forEach(f=>{
+    const ext=f.name.slice(f.name.lastIndexOf('.')).toLowerCase();
+    if(!ok.includes(ext))return;
+    if(files.find(x=>x.file.name===f.name&&x.file.size===f.size))return;
+    files.push({file:f, ext:ext.replace('.','').toUpperCase(), pages:guessPages(f), copies:1, url:URL.createObjectURL(f)});
+    n++;
+  });
+  if(!n){toast('Skipped','No new valid files found.',true);return;}
+  renderTable(); updateSummary();
+  toast('Files added', n+' file'+(n>1?'s':'')+' added.');
+}
+
+function guessPages(f){
+  const ext=f.name.slice(f.name.lastIndexOf('.')).toLowerCase();
+  if(['.png','.jpg','.jpeg','.tiff','.tif'].includes(ext))return 1;
+  return Math.max(1,Math.round(f.size/70000));
+}
+
+function renderTable(){
+  const tbody=document.getElementById('fileList');
+  const wrap=document.getElementById('fileTableWrap');
+  tbody.innerHTML='';
+  if(!files.length){wrap.style.display='none';updateFooter();return;}
+  wrap.style.display='block';
+  files.forEach((f,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="td-num">${i+1}</td>
+      <td class="td-name"><span class="td-name-inner" title="${f.file.name}">${f.file.name}</span></td>
+      <td class="td-ext">${f.ext}</td>
+      <td class="td-pages"><span class="pages-badge">${f.pages}p</span></td>
+      <td class="td-copies"><div class="copies-ctrl">
+        <button onclick="chCopies(${i},-1)">−</button>
+        <input class="copies-input" type="number" min="1" max="999" value="${f.copies}" onchange="setCopies(${i},this.value)">
+        <button onclick="chCopies(${i},1)">+</button>
+      </div></td>
+      <td class="td-subtotal" id="sub-${i}">${subTotal(f)}</td>
+      <td class="td-preview"><button class="btn-preview-sm" onclick="openPreview(${i})">View</button></td>
+      <td class="td-action"><button class="btn-rm" onclick="removeFile(${i})">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  updateFooter();
+}
+
+function updateFooter(){
+  document.getElementById('totalFiles').textContent=files.length;
+  document.getElementById('totalPrintPages').textContent=files.reduce((s,f)=>s+f.pages*f.copies,0);
+}
+
+function subTotal(f){
+  const pRate=[0,RATES.matte,RATES.glossy][['0','1','2'].indexOf(document.getElementById('paper').value)]||0;
+  const cRate=state.colour==='colour'?RATES.colour:0;
+  const rate=RATES.bw+cRate+pRate;
+  return '₹'+(f.pages*f.copies*rate).toFixed(2);
+}
+
+function chCopies(i,d){
+  files[i].copies=Math.max(1,files[i].copies+d);
+  const rows=document.querySelectorAll('#fileList tr');
+  if(rows[i]){rows[i].querySelector('.copies-input').value=files[i].copies;document.getElementById('sub-'+i).textContent=subTotal(files[i]);}
+  updateFooter(); updateSummary();
+}
+function setCopies(i,v){
+  files[i].copies=Math.max(1,parseInt(v)||1);
+  document.getElementById('sub-'+i).textContent=subTotal(files[i]);
+  updateFooter(); updateSummary();
+}
+function removeFile(i){URL.revokeObjectURL(files[i].url);files.splice(i,1);renderTable();updateSummary();}
+function clearAll(){files.forEach(f=>URL.revokeObjectURL(f.url));files=[];renderTable();updateSummary();}
+
+function pick(group,btn,val){
+  btn.closest('.radio-group').querySelectorAll('.radio-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); state[group]=val;
+  files.forEach((_,i)=>{const el=document.getElementById('sub-'+i);if(el)el.textContent=subTotal(files[i]);});
+}
+
+function updateSummary(){
+  const paperEl=document.getElementById('paper');
+  const pRate=[0,RATES.matte,RATES.glossy][['0','1','2'].indexOf(paperEl.value)]||0;
+  const paperLabel=paperEl.options[paperEl.selectedIndex].text.split(' (+')[0];
+  const cRate=state.colour==='colour'?RATES.colour:0;
+  const rate=RATES.bw+cRate+pRate;
+  const bindCost=state.binding==='staple'?RATES.staple:state.binding==='spiral'?RATES.spiral:0;
+  const totalPages=files.reduce((s,f)=>s+f.pages*f.copies,0);
+  const total=totalPages*rate+bindCost;
+
+  document.getElementById('s-paper').textContent=paperLabel;
+  document.getElementById('s-colour').textContent=cRate>0?'Full Colour':'Black & White';
+  document.getElementById('s-sides').textContent=state.sides==='double'?'Double-sided':'Single-sided';
+  document.getElementById('s-binding').textContent=state.binding.charAt(0).toUpperCase()+state.binding.slice(1);
+  document.getElementById('s-files').textContent=files.length+' file'+(files.length!==1?'s':'');
+  document.getElementById('s-pages').textContent=totalPages+' page'+(totalPages!==1?'s':'');
+  document.getElementById('s-rate').textContent='₹'+rate.toFixed(2);
+  document.getElementById('s-binding-cost').textContent='₹'+bindCost;
+  document.getElementById('s-total').textContent=files.length?'₹'+total.toFixed(2):'₹0.00';
+  document.getElementById('submitBtn').disabled=files.length===0;
+}
+
+// ── Submit ──────────────────────────────────────────────────────────────────
+async function submitOrder(){
+  const name=document.getElementById('cname').value.trim();
+  const email=document.getElementById('cemail').value.trim();
+  if(!name||!email){toast('Missing info','Please fill in name and email.',true);return;}
+
+  const paperEl=document.getElementById('paper');
+  const pRate=[0,RATES.matte,RATES.glossy][['0','1','2'].indexOf(paperEl.value)]||0;
+  const cRate=state.colour==='colour'?RATES.colour:0;
+  const rate=RATES.bw+cRate+pRate;
+  const bindCost=state.binding==='staple'?RATES.staple:state.binding==='spiral'?RATES.spiral:0;
+  const totalPages=files.reduce((s,f)=>s+f.pages*f.copies,0);
+  const amount=totalPages*rate+bindCost;
+
+  const submittingOverlay=document.getElementById('submittingOverlay');
+  const submittingMsg=document.getElementById('submittingMsg');
+  submittingOverlay.classList.add('show');
+  submittingMsg.textContent='Creating order…';
+
+  try {
+    // 1. Create order
+    const orderRes=await fetch(API+'/api/orders',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name, email,
+        phone:document.getElementById('cphone').value.trim(),
+        notes:document.getElementById('cnotes').value.trim(),
+        paper:paperEl.options[paperEl.selectedIndex].text.split(' (+')[0],
+        colour:state.colour, sides:state.sides, binding:state.binding,
+        total_pages:totalPages, total_copies:files.reduce((s,f)=>s+f.copies,0),
+        amount
+      })
+    }).then(r=>r.json());
+
+    if(!orderRes.order_id) throw new Error('Failed to create order');
+    const oid=orderRes.order_id;
+
+    // 2. Upload files
+    for(let i=0;i<files.length;i++){
+      const f=files[i];
+      submittingMsg.textContent=`Uploading file ${i+1} of ${files.length}…`;
+      const fd=new FormData();
+      fd.append('file',f.file);
+      fd.append('pages',f.pages);
+      fd.append('copies',f.copies);
+      await fetch(API+`/api/orders/${oid}/upload`,{method:'POST',body:fd});
+    }
+
+    submittingOverlay.classList.remove('show');
+    document.getElementById('successOrderId').textContent='#'+oid.split('-')[0].toUpperCase();
+    document.getElementById('successOverlay').classList.add('show');
+
+  } catch(e) {
+    submittingOverlay.classList.remove('show');
+    toast('Error', e.message||'Could not place order. Is the server running?', true);
+  }
+}
+
+function resetAll(){
+  clearAll(); state={colour:'bw',sides:'single',binding:'none'};
+  document.querySelectorAll('.radio-group').forEach(g=>g.querySelectorAll('.radio-btn').forEach((b,i)=>b.classList.toggle('active',i===0)));
+  document.getElementById('paper').value='0';
+  ['cname','cemail','cphone','cnotes'].forEach(id=>document.getElementById(id).value='');
+  updateSummary();
+  document.getElementById('successOverlay').classList.remove('show');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── Preview ──────────────────────────────────────────────────────────────────
+if(typeof pdfjsLib!=='undefined') pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let pdfDoc=null,pdfPage=1;
+
+async function openPreview(i){
+  const f=files[i];
+  document.getElementById('previewFileName').textContent=f.file.name;
+  document.getElementById('previewBody').innerHTML='<div class="modal-placeholder"><h5>Loading…</h5></div>';
+  document.getElementById('pdfNav').style.display='none';
+  document.getElementById('previewModal').classList.add('open');
+  const ext=f.ext.toLowerCase();
+  if(['png','jpg','jpeg','tiff','tif'].includes(ext)){
+    document.getElementById('previewBody').innerHTML=`<img src="${f.url}" alt="preview">`;return;
+  }
+  if(ext==='pdf'){
+    try{
+      pdfDoc=null;pdfPage=1;
+      pdfDoc=await pdfjsLib.getDocument(f.url).promise;
+      await renderPdfPage(pdfPage);
+      if(pdfDoc.numPages>1){document.getElementById('pdfNav').style.display='flex';updatePdfNav();}
+      if(files[i].pages!==pdfDoc.numPages){files[i].pages=pdfDoc.numPages;renderTable();updateSummary();}
+    }catch(e){showPlaceholder(f,'Could not render PDF.');}
+    return;
+  }
+  showPlaceholder(f,'Preview not available for this file type. It will be processed for printing.');
+}
+
+async function renderPdfPage(num){
+  const page=await pdfDoc.getPage(num);
+  const scale=Math.min(700/page.getViewport({scale:1}).width,2);
+  const vp=page.getViewport({scale});
+  const canvas=document.createElement('canvas');
+  canvas.width=vp.width;canvas.height=vp.height;
+  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+  document.getElementById('previewBody').innerHTML='';
+  document.getElementById('previewBody').appendChild(canvas);
+}
+
+function changePdfPage(d){if(!pdfDoc)return;pdfPage=Math.max(1,Math.min(pdfDoc.numPages,pdfPage+d));renderPdfPage(pdfPage);updatePdfNav();}
+function updatePdfNav(){document.getElementById('pdfPageInfo').textContent=`Page ${pdfPage} of ${pdfDoc.numPages}`;document.getElementById('prevPage').disabled=pdfPage<=1;document.getElementById('nextPage').disabled=pdfPage>=pdfDoc.numPages;}
+function showPlaceholder(f,msg){document.getElementById('previewBody').innerHTML=`<div class="modal-placeholder"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><h5>${f.file.name}</h5><p>${msg}</p></div>`;}
+function closePreview(){document.getElementById('previewModal').classList.remove('open');pdfDoc=null;pdfPage=1;}
+document.getElementById('previewModal').addEventListener('click',function(e){if(e.target===this)closePreview();});
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+function toast(title,msg,err=false){
+  const el=document.getElementById('toast');
+  document.getElementById('t-title').textContent=title;
+  document.getElementById('t-msg').textContent=msg;
+  el.classList.toggle('error',err);
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+loadSettings();
+updateSummary();
+</script>
+</body>
+</html>
