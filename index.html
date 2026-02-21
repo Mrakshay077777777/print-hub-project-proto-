@@ -329,6 +329,11 @@ footer p{font-size:.58rem;color:var(--muted);letter-spacing:.08em;}
 </main>
 
 <footer>
+  <span id="openForm" style="color:blue;cursor:pointer;">Change Backend</span>
+<div id="backendForm" style="display:none; margin-top:10px;">
+  <input type="text" id="backendUrlInput" placeholder="Enter backend URL">
+  <button onclick="saveBackendUrl()">Save</button>
+</div>
   <p id="footer-shop-name">PRINTX — A4 Print Service</p>
   <div class="footer-links"><a href="/admin">Admin Panel</a><a href="#">Privacy</a></div>
 </footer>
@@ -370,7 +375,27 @@ footer p{font-size:.58rem;color:var(--muted);letter-spacing:.08em;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-const API = '';  // same origin
+
+// Updating Backend Url
+document.getElementById("openForm").addEventListener("click", function() {
+  const form = document.getElementById("backendForm")
+  form.style.display = form.style.display === "none" ? "block" : "none"
+})
+
+function saveBackendUrl() {
+  const url = document.getElementById("backendUrlInput").value
+  localStorage.setItem("backend_url", url)
+  alert("Saved!")
+  document.getElementById("backendForm").style.display = "none"
+}
+
+window.onload = function() {
+  const saved = localStorage.getItem("backend_url")
+  if(saved){
+    document.getElementById("backendUrlInput").value = saved
+  }
+}
+const API = localStorage.setItem("backend_url", url);  // Backend url update from local storage
 const inp = document.getElementById('file-input');
 
 // Pricing rates (will be updated from server)
